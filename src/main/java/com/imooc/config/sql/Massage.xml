@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+       Copyright 2009-2012 the original author or authors.
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+
+-->
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+
+<!-- 为配置文件取名，不同的名称下，sql标签的id可以相同 -->
+<!-- 将namespace 定义为接口 sql id 定义为接口中的方法名 -->
+<mapper namespace="com.imooc.dao.IMassage">
+
+  <!-- 该标签用于配置对应的bean 和数据库表 -->
+  <!-- type 属性 对应实例化的bean 类全名 -->
+  <resultMap type="com.imooc.bean.Massage" id="MassageResult">
+  	<!-- 主键使用id标签 其余字段用result标签
+  		coulumn对应数据库的字段名 
+  		property 对应bean 对象中的属性名
+  		jdbcType  与 java中的  java.sql.Types.CLOB(该常量对应数据库中的字段类型)  
+  		-->
+    <id column="id" jdbcType="INTEGER" property="id"/>
+    <result column="command" jdbcType="VARCHAR" property="command"/>
+    <result column="description" jdbcType="VARCHAR" property="description"/>
+    <result column="content" jdbcType="VARCHAR" property="content"/>
+  </resultMap>
+
+  <!-- ID  在java中调用的代码则输入该ID名 
+  	resultMap 属性 对应 resultMap标签的id 属性值为该标签名表示结果对应该标签
+  	中bean 与 字段的对应关系 保存入bean中
+  	
+  	parameterType 参数的设定
+  	如果当个参数则直接写类型
+  	多个参数封装进entity中并写 类全名
+  -->
+  <select id="selectMassage" parameterType="com.imooc.bean.Massage" resultMap="MassageResult">
+     SELECT ID,COMMAND,DESCRIPTION,CONTENT FROM message 
+     <!-- 对应jdbc的条件拼接  test对应if内容 if的内容为拼接内容
+     	OGNL 支持java 表达式
+     	“” &  在XML 中冲突需要转义
+     	&quot; 转义双引号Message.xml
+     	&amp;  转义&  也可以使用OGNL 自己的操作符 and
+     	and command=#{command}等于 java中的 command=？
+     	#{command} 为取值写法 {变量名}
+      -->
+      <where>
+	 	<if test="command != null and !&quot;&quot;.equals(command.trim())">
+	    	and COMMAND=#{command}
+	 	</if>     
+     	<if test="description != null and !&quot;&quot;.equals(description.trim())">
+     		and DESCRIPTION like '%' #{description} '%'
+     	</if>
+     </where>
+  </select>
+  
+  <!-- 一个参数时  parmeterMap属性的值直接写参数类型  -->
+  <delete id="deleteOne" parameterType="int" >
+  	delete from message where ID = #{_parameter}
+  </delete>
+  
+ <!-- 批量删除，List集合操作 -->
+ <delete id="deleteBatch" parameterType="java.util.List">
+ 	<!-- in 标签sql where子句，判断在一个范围内 -->
+ 	delete from message where ID in (
+ 		<!-- 
+ 			collection  集合  属性为集合类型
+ 			item  项   代表集合中的每个对象，如果是对象则需要.对象属性
+ 			separator  分隔   属性一般为,号  用于分隔条件语句
+ 		 -->
+ 		<foreach collection="list" item="item" separator=",">
+ 			#{item}
+ 		</foreach>
+ 	)
+ </delete>
+<!-- 
+<update id="updateMassage" parameterType="com.imooc.bean.Massage">
+	set 标签，动态拼接字段并去除最后一个字段的，号分隔
+	update message 
+	<set>
+		<if test="command != null and !&quot;&quot;.equals(command.trim())">
+	    	COMMAND=#{command},
+	 	</if>     
+     	<if test="description != null and !&quot;&quot;.equals(description.trim())">
+     		DESCRIPTION = #{description},
+     	</if>
+	</set> 
+
+</update>
+-->
+
+
+<!-- 综合标签 trim 灵活的组合功能 
+	可以代替 where 标签 与 set 标签
+-->
+<!-- <update id="updateMassage" parameterType="com.imooc.bean.Massage">
+	set 标签，动态拼接字段并去除最后一个字段的，号分隔
+	update message 
+	
+		prefix 自定义是where 或者 set
+		suffix="test" 在内容后面增加自定内容 例如查询结果字段 张三 则结果为张三test
+		prefixOverrides="and|on" 例如and或on 就是切除拼接字符串的第一个and或者on 
+		suffixOverrides=","  对应切除第一个，该例子切除最后一个 ，号
+	
+	<trim prefix="where" suffix="test" suffixOverrides=",">
+     	强化if 等于 if else if
+     		也可以当做 switch
+     	
+     	<choose>
+     		<when test="command != null and !&quot;&quot;.equals(command.trim())">
+     			COMMAND=#{command},
+     		</when>
+     		<when test="description != null and !&quot;&quot;.equals(description.trim())">
+     			DESCRIPTION = #{description},
+     		</when>
+     		相当于else
+     		<otherwise>
+     			1 = 1
+     		</otherwise>
+     	</choose>
+	</trim>
+</update> -->
+
+
+
+
+
+
+
+
+</mapper>
